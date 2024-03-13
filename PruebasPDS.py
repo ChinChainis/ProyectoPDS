@@ -14,8 +14,9 @@ import matplotlib.pyplot as plt
 #print(a.read())
 
 #b = sys.argv
-cancionbuscar = sys.argv[1]
+carpeta = sys.argv[1]
 fragmento = sys.argv[2]
+
 #a = open(c)
 
 #print(c)
@@ -25,27 +26,38 @@ fragmento = sys.argv[2]
 
 
 #ej, samplerate = sf.read(c)
-print(cancionbuscar)
+archivos = os.listdir(carpeta)
+numarch = len(os.listdir(carpeta))
 
-Fs, funOG = wavfile.read(cancionbuscar) #Fs frecuencia de 16000 hercios 
-Fs, funFR = wavfile.read(fragmento)
+print(numarch)
 
-print(funFR.shape)
+for i in range(0,numarch):
+    print(archivos[i])
+    Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
+    Fs, funFR = wavfile.read(fragmento)
 
-fig, (ax, ax2) = plt.subplots(1,2)
 
-x = np.linspace(0, 1, 106148)
-x2 = np.linspace(0, 1, 32000)
-ax.plot(x,funOG, label="Funcion Cancion")
-ax2.plot(x2,funFR, label="Funcion Fragmento",  color="Green")
+    print(funOG.shape[0])
 
-ax.axis([0,1,0,30000])
-ax2.axis([0,1,0,30000])
+    fig, (ax, ax2) = plt.subplots(1,2)
 
-ax.legend(loc=0)
-ax2.legend(loc=0)
+    x = np.linspace(0, 1, funOG.shape[0])
+    x2 = np.linspace(0, 1, 32000)
+    ax.plot(x,funOG, label="Funcion Cancion")
+    ax2.plot(x2,funFR, label="Funcion Fragmento",  color="Green")
 
-plt.show()
+    ax.axis([0,1,0,30000])
+    ax2.axis([0,1,0,30000])
+
+    ax.legend(loc=0)
+    ax2.legend(loc=0)
+    
+    plt.show()
+
+#print(os.listdir("audios")[1])
+
+
+#plt.show()
 
 
 
