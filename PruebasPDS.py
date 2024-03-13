@@ -4,6 +4,7 @@ import numpy as np
 import pandas
 import sys
 import scipy as sc #procesamiento, para transformada fourier, interpolacion etc
+from scipy.io import wavfile
 import soundfile as sf
 import os
 import pydub as pd #se usa para tener la función de transformar mp3 en wav
@@ -23,13 +24,15 @@ destino = "test.wav"
 #cwav.export(dst_path,format="wav")
 
 
-ej, samplerate = sf.read(c)
+#ej, samplerate = sf.read(c)
+
+Fs, fun = wavfile.read('audios/castanets.wav') #Fs frecuencia de 16000 hercios 
 
 
-print(ej.shape)
+print(fun.shape)
 x = np.linspace(0, 1, 106148)
-plt.plot(x,ej)
-plt.axis([0,1,0,2])
+plt.plot(x,fun)
+plt.axis([0,1,0,30000])
 plt.show()
 
 
