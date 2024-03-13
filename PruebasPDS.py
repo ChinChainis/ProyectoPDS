@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 #print(a.read())
 
 #b = sys.argv
-c = sys.argv[1]
-destino = "test.wav"
+cancionbuscar = sys.argv[1]
+fragmento = sys.argv[2]
 #a = open(c)
 
 #print(c)
@@ -25,14 +25,26 @@ destino = "test.wav"
 
 
 #ej, samplerate = sf.read(c)
+print(cancionbuscar)
 
-Fs, fun = wavfile.read('audios/castanets.wav') #Fs frecuencia de 16000 hercios 
+Fs, funOG = wavfile.read(cancionbuscar) #Fs frecuencia de 16000 hercios 
+Fs, funFR = wavfile.read(fragmento)
 
+print(funFR.shape)
 
-print(fun.shape)
+fig, (ax, ax2) = plt.subplots(1,2)
+
 x = np.linspace(0, 1, 106148)
-plt.plot(x,fun)
-plt.axis([0,1,0,30000])
+x2 = np.linspace(0, 1, 32000)
+ax.plot(x,funOG, label="Funcion Cancion")
+ax2.plot(x2,funFR, label="Funcion Fragmento",  color="Green")
+
+ax.axis([0,1,0,30000])
+ax2.axis([0,1,0,30000])
+
+ax.legend(loc=0)
+ax2.legend(loc=0)
+
 plt.show()
 
 
