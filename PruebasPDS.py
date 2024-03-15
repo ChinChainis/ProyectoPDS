@@ -31,20 +31,13 @@ numarch = len(os.listdir(carpeta))
 
 print(numarch)
 
-for i in range(0,numarch):
-    print(archivos[i])
-    Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
-    Fs, funFR = wavfile.read(fragmento)
-
-
-    print(funOG.shape[0])
-
+def representar(fun1,fun2):
     fig, (ax, ax2) = plt.subplots(1,2)
 
-    x = np.linspace(0, 1, funOG.shape[0])
+    x = np.linspace(0, 1, fun1.shape[0])
     x2 = np.linspace(0, 1, 32000)
-    ax.plot(x,funOG, label="Funcion Cancion")
-    ax2.plot(x2,funFR, label="Funcion Fragmento",  color="Green")
+    ax.plot(x,fun1, label="Funcion Cancion")
+    ax2.plot(x2,fun2, label="Funcion Fragmento",  color="Green")
 
     ax.axis([0,1,0,30000])
     ax2.axis([0,1,0,30000])
@@ -53,6 +46,14 @@ for i in range(0,numarch):
     ax2.legend(loc=0)
     
     plt.show()
+
+for i in range(0,numarch):
+    print(archivos[i])
+    Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
+    Fs, funFR = wavfile.read(fragmento)
+
+    representar(funOG,funFR)
+
 
 #print(os.listdir("audios")[1])
 
