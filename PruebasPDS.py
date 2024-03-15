@@ -46,19 +46,36 @@ def representar(fun1,fun2):
     ax2.legend(loc=0)
     
     plt.show()
+    
+def comparar(fun1,fun2):
+    error=0
+    sumerror = 0
+    pos = 0
+    valmin = 0
+    for i in range(0, fun1.shape[0]):
+        sumerror += (fun2[pos] - fun1[i])**2
+        if (pos == fun2.shape[0]-1):
+            #print("fun2 pos",fun2[pos])
+            #print("fun1 i",fun1[i])
+            #print("sumerror uni",(fun2[pos] - fun1[i])**2)
+            if (valmin==0) or (sumerror < valmin):
+                np.append(valmin,sumerror)
+                print("Val min actual: ",sumerror)
+            sumerror = 0
+            pos = 0
+        else:
+            pos+=1
+    print("Valor minimo",valmin)
+    
 
-for i in range(0,numarch):
+for i in range(0,numarch-1):
     print(archivos[i])
     Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
     Fs, funFR = wavfile.read(fragmento)
 
-    representar(funOG,funFR)
+    comparar(funOG,funFR)
 
 
 #print(os.listdir("audios")[1])
-
-
-#plt.show()
-
 
 
