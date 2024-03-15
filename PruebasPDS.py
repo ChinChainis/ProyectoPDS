@@ -9,6 +9,7 @@ import soundfile as sf
 import os
 import pydub as pd #se usa para tener la función de transformar mp3 en wav
 import matplotlib.pyplot as plt
+import math
 
 #a = open("test.txt")
 #print(a.read())
@@ -52,20 +53,26 @@ def comparar(fun1,fun2):
     sumerror = 0
     pos = 0
     valmin = 0
+    listavalmin = 0
+    print(fun1.shape[0] / fun2.shape[0])
     for i in range(0, fun1.shape[0]):
-        sumerror += (fun2[pos] - fun1[i])**2
+        sumerror += math.sqrt( (fun2[pos] - fun1[i])**2 )
         if (pos == fun2.shape[0]-1):
             #print("fun2 pos",fun2[pos])
             #print("fun1 i",fun1[i])
             #print("sumerror uni",(fun2[pos] - fun1[i])**2)
-            if (valmin==0) or (sumerror < valmin):
-                np.append(valmin,sumerror)
-                print("Val min actual: ",sumerror)
+            if (valmin==0):
+                valmin = sumerror
+            if (sumerror < valmin):
+                valmin = sumerror
+            print("Val min actual: ",sumerror)
             sumerror = 0
             pos = 0
         else:
             pos+=1
     print("Valor minimo",valmin)
+    np.append(listavalmin,valmin/100)
+    print("lista total: ",listavalmin)
     
 
 for i in range(0,numarch-1):
