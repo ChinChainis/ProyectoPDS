@@ -17,6 +17,7 @@ import math
 #b = sys.argv
 carpeta = sys.argv[1]
 fragmento = sys.argv[2]
+valmintotal = 0
 
 #a = open(c)
 
@@ -56,7 +57,7 @@ def comparar(fun1,fun2):
     listavalmin = 0
     print(fun1.shape[0] / fun2.shape[0])
     for i in range(0, fun1.shape[0]):
-        sumerror += math.sqrt( (fun2[pos] - fun1[i])**2 )
+        sumerror += (fun2[pos] - fun1[i])**2
         if (pos == fun2.shape[0]-1):
             #print("fun2 pos",fun2[pos])
             #print("fun1 i",fun1[i])
@@ -71,18 +72,25 @@ def comparar(fun1,fun2):
         else:
             pos+=1
     print("Valor minimo",valmin)
-    np.append(listavalmin,valmin/100)
-    print("lista total: ",listavalmin)
+    return valmin
+    #np.append(listavalmin,valmin/100)
+    #print("lista total: ",listavalmin)
     
 
 for i in range(0,numarch-1):
     print(archivos[i])
     Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
     Fs, funFR = wavfile.read(fragmento)
+    nomcancion = ""
+    valtemp = comparar(funOG,funFR)
+    if(valmintotal==0):
+        nomcancion = "Canción: "+archivos[i]
+        valmintotal=valtemp
+    elif(valtemp < valmintotal):
+        nomcancion = "Canción: "+archivos[i]
+        valmintotal=valtemp
 
-    comparar(funOG,funFR)
-
-
+print("Canción coincidente: ",nomcancion, ". Valor: ",valmintotal)
 #print(os.listdir("audios")[1])
 
 
