@@ -57,20 +57,22 @@ def comparar(fun1,fun2):
     listavalmin = 0
     print(fun1.shape[0] / fun2.shape[0])
     for i in range(0, fun1.shape[0]):
-        sumerror += (fun2[pos] - fun1[i])**2
-        if (pos == fun2.shape[0]-1):
-            #print("fun2 pos",fun2[pos])
-            #print("fun1 i",fun1[i])
-            #print("sumerror uni",(fun2[pos] - fun1[i])**2)
-            if (valmin==0):
-                valmin = sumerror
-            if (sumerror < valmin):
-                valmin = sumerror
-            print("Val min actual: ",sumerror)
-            sumerror = 0
-            pos = 0
-        else:
-            pos+=1
+        for j in range(0, fun2.shape[0]):
+            #fun2 fragmento fun1 cancion
+            sumerror += (fun2[pos] - fun1[i])**2
+            if (pos == fun2.shape[0]-1):
+                #print("fun2 pos",fun2[pos])
+                #print("fun1 i",fun1[i])
+                #print("sumerror uni",(fun2[pos] - fun1[i])**2)
+                if (valmin==0):
+                    valmin = sumerror
+                if (sumerror < valmin):
+                    valmin = sumerror
+                #print("Val min actual: ",sumerror)
+                sumerror = 0
+                pos = 0
+            else:
+                pos+=1
     print("Valor minimo",valmin)
     return valmin
     #np.append(listavalmin,valmin/100)
