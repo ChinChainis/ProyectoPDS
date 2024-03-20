@@ -50,29 +50,39 @@ def representar(fun1,fun2):
     plt.show()
     
 def comparar(fun1,fun2):
-    error=0
+    #fun1 canción a comparar, fun2 fragmento que comparamos
     sumerror = 0
+    #sumerror sumatoria del algoritmo básico
     pos = 0
+    #valor mínimo actual, indicaría qué canción tiene el menos error de comparación
     valmin = 0
-    listavalmin = 0
+    #Indica el número de veces que es de grande la canción en comparación con el fragmento
     print(fun1.shape[0] / fun2.shape[0])
-    for i in range(0, fun1.shape[0]):
-        for j in range(0, fun2.shape[0]):
-            #fun2 fragmento fun1 cancion
-            sumerror += (fun2[pos] - fun1[i])**2
-            if (pos == fun2.shape[0]-1):
-                #print("fun2 pos",fun2[pos])
-                #print("fun1 i",fun1[i])
-                #print("sumerror uni",(fun2[pos] - fun1[i])**2)
-                if (valmin==0):
-                    valmin = sumerror
-                if (sumerror < valmin):
-                    valmin = sumerror
-                #print("Val min actual: ",sumerror)
-                sumerror = 0
-                pos = 0
-            else:
-                pos+=1
+    #recorref1 array de tamaño del fragmento para reducir tamaño de comparación
+    recorref1 = np.zeros(fun2.shape[0])
+    print(fun1.shape[0]-fun2.shape[0])
+    #el bucle va desde el principio de la canción (0) hasta el final menos el tamaño del fragmento, dado que comparamos en trozos
+    #del tamaño de fragmentos pues acabaría terminando en 32000 |_32000_|_32000_|_32000_|
+    for i in range(0, fun1.shape[0]-fun2.shape[0]):
+        #recorref1 empieza de 0 hasta el tamaño del fragmento 2, si es 32000 es un vector del 0 al 31999
+        recorref1 = fun1[i:fun2.shape[0]+i]
+        #resta todos los elementos de ambos arrays
+        restaarrays = np.subtract(fun2,recorref1)
+        #eleva cada elemento de los arrays a potencia de 2
+        potarrays = np.power(restaarrays,2)
+        #obtiene la sumatoria de todos los elementos del array
+        sumerror = np.sum(potarrays)
+        #for pos in range(0,fun2.shape[0]):
+            #sumatoria
+            #sumerror += (fun2[pos] - recorref1[pos])**2
+        #print(sumerror)
+        if (valmin==0): 
+            valmin = sumerror
+        if (sumerror < valmin):
+            valmin = sumerror
+        #print("valmin: ",valmin)
+            #print("Val min actual: ",sumerror)
+        sumerror = 0
     print("Valor minimo",valmin)
     return valmin
     #np.append(listavalmin,valmin/100)
