@@ -66,19 +66,23 @@ def comparar(fun1,fun2):
     for i in range(0, fun1.shape[0]-fun2.shape[0]):
         #recorref1 empieza de 0 hasta el tamaño del fragmento 2, si es 32000 es un vector del 0 al 31999
         recorref1 = fun1[i:fun2.shape[0]+i]
-        #sumatoria
-        sumerror += (fun2[pos] - recorref1[pos])**2
-        if (pos == fun2.shape[0]-1):
-            #para que el valor mínimo se sustituya la primera vez aunque sea 0 188806
-            if (valmin==0): 
-                valmin = sumerror
-            if (sumerror < valmin):
-                valmin = sumerror
-            print("Val min actual: ",sumerror)
-            sumerror = 0
-            pos = 0
-        else:
-            pos+=1
+        #resta todos los elementos de ambos arrays
+        restaarrays = np.subtract(fun2,recorref1)
+        #eleva cada elemento de los arrays a potencia de 2
+        potarrays = np.power(restaarrays,2)
+        #obtiene la sumatoria de todos los elementos del array
+        sumerror = np.sum(potarrays)
+        #for pos in range(0,fun2.shape[0]):
+            #sumatoria
+            #sumerror += (fun2[pos] - recorref1[pos])**2
+        #print(sumerror)
+        if (valmin==0): 
+            valmin = sumerror
+        if (sumerror < valmin):
+            valmin = sumerror
+        #print("valmin: ",valmin)
+            #print("Val min actual: ",sumerror)
+        sumerror = 0
     print("Valor minimo",valmin)
     return valmin
     #np.append(listavalmin,valmin/100)
