@@ -67,9 +67,11 @@ def comparar(fun1,fun2):
         #recorref1 empieza de 0 hasta el tamaño del fragmento 2, si es 32000 es un vector del 0 al 31999
         recorref1 = fun1[i:fun2.shape[0]+i]
         #resta todos los elementos de ambos arrays
-        restaarrays = np.subtract(fun2,recorref1)
+        restaarrays = np.int64(np.subtract(fun2,recorref1))
         #eleva cada elemento de los arrays a potencia de 2
         potarrays = np.power(restaarrays,2)
+        print("resta",restaarrays)
+        print("pot",potarrays)
         #obtiene la sumatoria de todos los elementos del array
         sumerror = np.sum(potarrays)
         #for pos in range(0,fun2.shape[0]):
