@@ -17,6 +17,7 @@ from pydub import AudioSegment
 #conda install -c conda-forge ffmpeg
 #o añadir desde el anaconda navigator enviroments el ffmpeg
 
+#python3 PruebasPDS.py audios audios/fragmento.wav
 
 def mp3awav(ubicacion):
     path = os.getcwd()
@@ -113,6 +114,12 @@ for i in range(0,numarch-1):
     print(archivos[i])
     Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
     Fs, funFR = wavfile.read(fragmento)
+    print('Tamanio',funOG.shape)
+    if(len(funOG.shape)!=1):
+        #tamUnidim = 2*funOG.shape[0]
+        #np.reshape(funOG,tamUnidim)
+        funOG.flatten()
+    print('Tamanio',funOG.shape)
     valtemp = comparar(funOG,funFR)
     #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
     listavaldef[i] = valtemp
