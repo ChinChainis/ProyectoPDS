@@ -7,7 +7,6 @@ import scipy as sc #procesamiento, para transformada fourier, interpolacion etc
 from scipy.io import wavfile
 import soundfile as sf
 import os
-import pydub as pd #se usa para tener la función de transformar mp3 en wav
 import matplotlib.pyplot as plt
 import math
 
