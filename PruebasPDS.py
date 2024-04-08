@@ -86,6 +86,15 @@ def comparar(fun1,fun2):
 #lista de valores mínimos de cada canción de la carpeta a analizar
 listavaldef = np.zeros(numarch-1)
 
+
+def busqueda2(fun1,fun2):
+    valorini = fun2[0]
+    #buscar en fun1 donde coincida el primer valor
+    #Cuando coincida empezar comparación y anotar error en lista
+    #mismo proceso que antes, seleccionar la canción con menor error
+     
+
+
 for i in range(0,numarch-1):
     print(archivos[i])
     Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
@@ -98,5 +107,9 @@ valmintotaldef = listavaldef[np.argmin(listavaldef)]
 nomcanciondef = archivos[np.argmin(listavaldef)]
 print("Resultado: ",nomcanciondef, ". Valor: ",valmintotaldef)
 #print(os.listdir("audios")[1])
+
+
+
+#python3 PruebasPDS.py audios audios/fragmento.wav
 
 
