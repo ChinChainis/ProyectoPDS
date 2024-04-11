@@ -10,6 +10,8 @@ import os
 import matplotlib.pyplot as plt
 import math
 
+
+umbral = 50.0
 #a = open("test.txt")
 #print(a.read())
 
@@ -103,8 +105,10 @@ for i in range(0,numarch-1):
     #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
     listavaldef[i] = valtemp
 valmintotaldef = listavaldef[np.argmin(listavaldef)]
-#Como guarda la posición del valor mínimo, pues corresponderá a esa canción coincidente
-nomcanciondef = archivos[np.argmin(listavaldef)]
+nomcanciondef = 'NOT_FOUND'
+if (valmintotal < umbral):
+    #Como guarda la posición del valor mínimo, pues corresponderá a esa canción coincidente
+    nomcanciondef = archivos[np.argmin(listavaldef)]
 print("Resultado: ",nomcanciondef, ". Valor: ",valmintotaldef)
 #print(os.listdir("audios")[1])
 
