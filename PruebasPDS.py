@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import math
 
 
-umbral = 50
+umbral = 100000
 #a = open("test.txt")
 #print(a.read())
 
@@ -90,6 +90,12 @@ listavaldef = []
 listanombres = []
 
 def busqueda2(fun1,fun2):
+    #buscar en fun1 donde coincida el primer valor
+    #Cuando coincida empezar comparación y anotar error en lista
+    #He puesto un valor  temporal de error de 1000000000 por si no encuentra un valor similar, 
+    #este debería ser como el umbral
+    #mismo proceso que antes, seleccionar la canción con menor error
+    
     valorini = fun2[0]
     listavalores =[]
     sumerror=0
@@ -108,9 +114,7 @@ def busqueda2(fun1,fun2):
         valmin = 1000000000
     print("Valor minimo",valmin)
     return valmin
-    #buscar en fun1 donde coincida el primer valor
-    #Cuando coincida empezar comparación y anotar error en lista
-    #mismo proceso que antes, seleccionar la canción con menor error
+
      
 
 
