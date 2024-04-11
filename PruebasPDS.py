@@ -11,14 +11,13 @@ import matplotlib.pyplot as plt
 import math
 
 
-umbral = 50.0
+umbral = 50
 #a = open("test.txt")
 #print(a.read())
 
 #b = sys.argv
 carpeta = sys.argv[1]
 fragmento = sys.argv[2]
-valmintotal = 0
 
 #a = open(c)
 
@@ -78,6 +77,7 @@ def comparar(fun1,fun2):
         sumerror = np.sum(potarrays)
         listavalores[i]=sumerror
         sumerror = 0
+    #print('lista',listavalores)
     #Sacamos el valor mínimo obtenido de recorrer la canción
     valmin = listavalores[np.argmin(listavalores)]
     print("Valor minimo",valmin)
@@ -86,8 +86,8 @@ def comparar(fun1,fun2):
     #print("lista total: ",listavalmin)
     
 #lista de valores mínimos de cada canción de la carpeta a analizar
-listavaldef = np.zeros(numarch-1)
-
+listavaldef = []
+listanombres = []
 
 def busqueda2(fun1,fun2):
     valorini = fun2[0]
@@ -97,18 +97,29 @@ def busqueda2(fun1,fun2):
      
 
 
-for i in range(0,numarch-1):
-    print(archivos[i])
+for i in range(0,numarch):
+    print(archivos[i],' Y ',fragmento[7:])
     Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
     Fs, funFR = wavfile.read(fragmento)
-    valtemp = comparar(funOG,funFR)
-    #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
-    listavaldef[i] = valtemp
+    print("tam",funOG.shape[0])
+    nom = archivos[i]
+    if(funOG.shape[0] >= funFR.shape[0]):
+        if(archivos[i] != fragmento[7:]):
+            valtemp = comparar(funOG,funFR)
+            #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
+            listavaldef.append(valtemp)
+            print(listavaldef)
+            listanombres.append(archivos[i])
+        else:
+            print('Es el mismo archivo: ',archivos[i],' y ',fragmento[7:])
+    else:
+        print('Fragmento más grande que la canción, no es posible')
 valmintotaldef = listavaldef[np.argmin(listavaldef)]
 nomcanciondef = 'NOT_FOUND'
-if (valmintotal < umbral):
+if (valmintotaldef < umbral):
     #Como guarda la posición del valor mínimo, pues corresponderá a esa canción coincidente
-    nomcanciondef = archivos[np.argmin(listavaldef)]
+    nomcanciondef = listanombres[np.argmin(listavaldef)]
+    
 print("Resultado: ",nomcanciondef, ". Valor: ",valmintotaldef)
 #print(os.listdir("audios")[1])
 
