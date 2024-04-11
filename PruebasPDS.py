@@ -91,6 +91,23 @@ listanombres = []
 
 def busqueda2(fun1,fun2):
     valorini = fun2[0]
+    listavalores =[]
+    sumerror=0
+    for i in range(0,fun1.shape[0]):
+        if(fun1[i] == valorini):
+            if(fun1.shape[0]-i > fun2.shape[0]):
+                recorref1 = fun1[i:fun2.shape[0]+i]
+                restaarrays = np.int64(np.subtract(fun2,recorref1))
+                potarrays = np.power(restaarrays,2)
+                sumerror = np.sum(potarrays)
+                listavalores.append(sumerror)
+                sumerror = 0
+    if(listavalores != []):
+        valmin = listavalores[np.argmin(listavalores)]
+    else:
+        valmin = 1000000000
+    print("Valor minimo",valmin)
+    return valmin
     #buscar en fun1 donde coincida el primer valor
     #Cuando coincida empezar comparación y anotar error en lista
     #mismo proceso que antes, seleccionar la canción con menor error
@@ -105,7 +122,7 @@ for i in range(0,numarch):
     nom = archivos[i]
     if(funOG.shape[0] >= funFR.shape[0]):
         if(archivos[i] != fragmento[7:]):
-            valtemp = comparar(funOG,funFR)
+            valtemp = busqueda2(funOG,funFR)
             #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
             listavaldef.append(valtemp)
             print(listavaldef)
