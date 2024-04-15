@@ -7,35 +7,21 @@ import scipy as sc #procesamiento, para transformada fourier, interpolacion etc
 from scipy.io import wavfile
 import soundfile as sf
 import os
-import pydub as pd #se usa para tener la función de transformar mp3 en wav
 import matplotlib.pyplot as plt
 import math
-#importar lo del  segmento de audio
-from pydub import AudioSegment
 
 
-#conda install -c conda-forge ffmpeg
-#o añadir desde el anaconda navigator enviroments el ffmpeg
-
-#python3 PruebasPDS.py audios audios/fragmento.wav
-
-def mp3awav(ubicacion):
-    path = os.getcwd()
-    os.chdir(path + '/' + ubicacion)
-    for archivo in  os.listdir(os.getcwd()):
-        nombre, ext = os.path.splitext(archivo)
-        if ext == ".mp3":
-                mp3_sound = AudioSegment.from_mp3(archivo)
-                mp3_sound.export("{0}.wav".format(nombre), format="wav")
-    os.chdir(path)
-
+umbral = 100000
 #a = open("test.txt")
 #print(a.read())
 
 #b = sys.argv
+
+
 carpeta = sys.argv[1]
 fragmento = sys.argv[2]
-valmintotal = 0
+
+
 
 #a = open(c)
 
@@ -46,13 +32,8 @@ valmintotal = 0
 
 
 #ej, samplerate = sf.read(c)
-mp3awav(carpeta)
-archivos= os.listdir(carpeta)
-for archivo in os.listdir(carpeta):
-    nombre, ext = os.path.splitext(archivo)
-    if ext == ".mp3":
-        archivos.remove(nombre+".mp3")
-numarch = len(archivos)
+archivos = os.listdir(carpeta)
+numarch = len(os.listdir(carpeta))
 
 print(numarch)
 
@@ -100,6 +81,7 @@ def comparar(fun1,fun2):
         sumerror = np.sum(potarrays)
         listavalores[i]=sumerror
         sumerror = 0
+    #print('lista',listavalores)
     #Sacamos el valor mínimo obtenido de recorrer la canción
     valmin = listavalores[np.argmin(listavalores)]
     print("Valor minimo",valmin)
@@ -108,23 +90,70 @@ def comparar(fun1,fun2):
     #print("lista total: ",listavalmin)
     
 #lista de valores mínimos de cada canción de la carpeta a analizar
-listavaldef = np.zeros(numarch-1)
+listavaldef = []
+listanombres = []
 
-for i in range(0,numarch-1):
-    print(archivos[i])
-    Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
+def busqueda2(fun1,fun2):
+    #buscar en fun1 donde coincida el primer valor
+    #Cuando coincida empezar comparación y anotar error en lista
+    #He puesto un valor  temporal de error de 1000000000 por si no encuentra un valor similar, 
+    #este debería ser como el umbral
+    #mismo proceso que antes, seleccionar la canción con menor error
+    
+    valorini = fun2[0]
+    listavalores =[]
+    sumerror=0
+    for i in range(0,fun1.shape[0]):
+        if(fun1[i] == valorini):
+            if(fun1.shape[0]-i > fun2.shape[0]):
+                recorref1 = fun1[i:fun2.shape[0]+i]
+                restaarrays = np.int64(np.subtract(fun2,recorref1))
+                potarrays = np.power(restaarrays,2)
+                sumerror = np.sum(potarrays)
+                listavalores.append(sumerror)
+                sumerror = 0
+    if(listavalores != []):
+        valmin = listavalores[np.argmin(listavalores)]
+    else:
+        valmin = 1000000000
+    print("Valor minimo",valmin)
+    return valmin
+
+     
+
+
+for i in range(0,numarch):
+    print(archivos[i],' Y ',fragmento[7:])
+    nombre, ext = os.path.splitext(archivos[i])
+    if ext == ".mp3":
+       funOG ,Fs  = sf.read(carpeta + '/' + '{0}.mp3'.format(nombre))
+       if(funOG.ndim>1):
+            funOG = funOG.mean(axis=-1)    
+    else:
+        Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
     Fs, funFR = wavfile.read(fragmento)
-    print('Tamanio',funOG.shape)
-    if(len(funOG.shape)!=1):
-        #tamUnidim = 2*funOG.shape[0]
-        #np.reshape(funOG,tamUnidim)
-        funOG.flatten()
-    print('Tamanio',funOG.shape)
-    valtemp = comparar(funOG,funFR)
-    #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
-    listavaldef[i] = valtemp
+    print("tam",funOG.shape[0])
+    nom = archivos[i]
+    if(funOG.shape[0] >= funFR.shape[0]):
+        if(archivos[i] != fragmento[7:]):
+            valtemp = busqueda2(funOG,funFR)
+            #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
+            listavaldef.append(valtemp)
+            print(listavaldef)
+            listanombres.append(archivos[i])
+        else:
+            print('Es el mismo archivo: ',archivos[i],' y ',fragmento[7:])
+    else:
+        print('Fragmento más grande que la canción, no es posible')
 valmintotaldef = listavaldef[np.argmin(listavaldef)]
-#Como guarda la posición del valor mínimo, pues corresponderá a esa canción coincidente
-nomcanciondef = archivos[np.argmin(listavaldef)]
+nomcanciondef = 'NOT_FOUND'
+if (valmintotaldef < umbral):
+    #Como guarda la posición del valor mínimo, pues corresponderá a esa canción coincidente
+    nomcanciondef = listanombres[np.argmin(listavaldef)]
+    
 print("Resultado: ",nomcanciondef, ". Valor: ",valmintotaldef)
 #print(os.listdir("audios")[1])
+
+
+
+#python3 PruebasPDS.py audios audios/fragmento.wav
