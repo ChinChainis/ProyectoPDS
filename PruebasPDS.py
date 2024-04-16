@@ -117,42 +117,11 @@ def busqueda2(fun1,fun2):
         valmin = 1000000000
     print("Valor minimo",valmin)
     return valmin
-
-
-def busqueda2(fun1,fun2):
-    #buscar en fun1 donde coincida el primer valor
-    #Cuando coincida empezar comparación y anotar error en lista
-    #He puesto un valor  temporal de error de 1000000000 por si no encuentra un valor similar, 
-    #este debería ser como el umbral
-    #mismo proceso que antes, seleccionar la canción con menor error
-    
-    valorini = fun2[0]
-    listavalores =[]
-    sumerror=0
-    for i in range(0,fun1.shape[0]):
-        if(fun1[i] == valorini):
-            if(fun1.shape[0]-i > fun2.shape[0]):
-                recorref1 = fun1[i:fun2.shape[0]+i]
-                restaarrays = np.int64(np.subtract(fun2,recorref1))
-                potarrays = np.power(restaarrays,2)
-                sumerror = np.sum(potarrays)
-                listavalores.append(sumerror)
-                sumerror = 0
-    if(listavalores != []):
-        valmin = listavalores[np.argmin(listavalores)]
-    else:
-        valmin = 1000000000
-    print("Valor minimo",valmin)
-    return valmin
-
-
-     
+   
 
 
 for i in range(0,numarch):
     print(archivos[i],' Y ',fragmento[7:])
-
-    Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
 
     nombre, ext = os.path.splitext(archivos[i])
     if ext == ".mp3":
