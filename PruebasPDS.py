@@ -13,7 +13,7 @@ import math
 
 
 data = {
-    "Canción":["Grado de coincidencia"]
+    "Canción":["Valor de disparidad"]
 }
 
 umbral = 100000
@@ -126,24 +126,31 @@ def busqueda2(fun1,fun2):
 
 
 for i in range(0,numarch):
+    #Indicamos con qué 2 archivos estamos trabajando
     print(archivos[i],' Y ',fragmento[7:])
 
     nombre, ext = os.path.splitext(archivos[i])
+    #Si es .mp3, el array tiene dimensiones estéreo de x,2, lo necesitamos en mono
     if ext == ".mp3":
        funOG ,Fs  = sf.read(carpeta + '/' + '{0}.mp3'.format(nombre))
        if(funOG.ndim>1):
             funOG = funOG.mean(axis=-1)    
+    #En .wav no hay problema
     else:
         Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
 
     Fs, funFR = wavfile.read(fragmento)
     print("tam",funOG.shape[0])
     nom = archivos[i]
+    #Si la canción es mayor o igual al fragmento se compara, es tontería buscar en una canción que sabes que no viene de ahí el fragmento
     if(funOG.shape[0] >= funFR.shape[0]):
+        #Comparamos también que no es el mismo archivo ya que coincidiría completamente
         if(archivos[i] != fragmento[7:]):
-            valtemp = busqueda2(funOG,funFR)
             #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
+            valtemp = busqueda2(funOG,funFR)
+            #Añadimos los datos comparados al diccionario para meterlo en el csv
             data[archivos[i]]=valtemp
+            #Aquí vamos añadiendo la lista de resultados para escoger el que tenga menor valor de disparidad
             listavaldef.append(valtemp)
             print(listavaldef)
             listanombres.append(archivos[i])
@@ -151,8 +158,11 @@ for i in range(0,numarch):
             print('Es el mismo archivo: ',archivos[i],' y ',fragmento[7:])
     else:
         print('Fragmento más grande que la canción, no es posible')
-valmintotaldef = listavaldef[np.argmin(listavaldef)]
+#Mínimo definitivo
+valmintotaldef = np.min(listavaldef)
+
 nomcanciondef = 'NOT_FOUND'
+#En caso de haber alguna canción que sea menor al umbral, se asumirá que el fragmento viene de ahí, si no será Not_Found
 if (valmintotaldef < umbral):
     #Como guarda la posición del valor mínimo, pues corresponderá a esa canción coincidente
     nomcanciondef = listanombres[np.argmin(listavaldef)]
@@ -161,6 +171,7 @@ print("Resultado: ",nomcanciondef, ". Valor: ",valmintotaldef)
 #print(os.listdir("audios")[1])
 
 
+#Permite pasar los resultados a csv
 print(data)
 df = pd.DataFrame(data)
 df.to_csv("result.csv", index=False,encoding="utf-8",sep=";")
