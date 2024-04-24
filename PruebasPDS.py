@@ -1,7 +1,7 @@
 #para activar anaconda $conda config --set auto_activate_base True
 #y volver a abrir el terminal
 import numpy as np
-import pandas
+import pandas as pd
 import sys
 import scipy as sc #procesamiento, para transformada fourier, interpolacion etc
 from scipy.io import wavfile
@@ -10,6 +10,11 @@ import os
 import matplotlib.pyplot as plt
 import math
 
+
+
+data = {
+    "Canción":["Grado de coincidencia"]
+}
 
 umbral = 100000
 #a = open("test.txt")
@@ -138,6 +143,7 @@ for i in range(0,numarch):
         if(archivos[i] != fragmento[7:]):
             valtemp = busqueda2(funOG,funFR)
             #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
+            data[archivos[i]]=valtemp
             listavaldef.append(valtemp)
             print(listavaldef)
             listanombres.append(archivos[i])
@@ -155,5 +161,8 @@ print("Resultado: ",nomcanciondef, ". Valor: ",valmintotaldef)
 #print(os.listdir("audios")[1])
 
 
+print(data)
+df = pd.DataFrame(data)
+df.to_csv("result.csv", index=False,encoding="utf-8",sep=";")
 
 #python3 PruebasPDS.py audios audios/fragmento.wav
