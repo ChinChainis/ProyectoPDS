@@ -12,11 +12,12 @@ import math
 
 
 
-data = {
-    "Canción":["Valor de disparidad"]
+datoscsv = {
+    'Canción': [],
+    'Valor disparidad': []
 }
 
-umbral = 100000
+umbral = 1000
 #a = open("test.txt")
 #print(a.read())
 
@@ -65,10 +66,10 @@ def comparar(fun1,fun2):
     #valor mínimo actual, indicaría qué canción tiene el menos error de comparación
     valmin = 0
     #Indica el número de veces que es de grande la canción en comparación con el fragmento
-    print(fun1.shape[0] / fun2.shape[0])
+    #print(fun1.shape[0] / fun2.shape[0])
     #recorref1 array de tamaño del fragmento para reducir tamaño de comparación
     recorref1 = np.zeros(fun2.shape[0])
-    print(fun1.shape[0]-fun2.shape[0])
+    #print(fun1.shape[0]-fun2.shape[0])
     #lista total de los valores obtenidos de recorrer una canción, se escoje el mínimo. 
     #En teoría si es la misma canción el mínimo es 0
     listavalores = np.zeros(fun1.shape[0]-fun2.shape[0])
@@ -88,7 +89,7 @@ def comparar(fun1,fun2):
     #print('lista',listavalores)
     #Sacamos el valor mínimo obtenido de recorrer la canción
     valmin = listavalores[np.argmin(listavalores)]
-    print("Valor minimo",valmin)
+    #print("Valor minimo",valmin)
     return valmin
     #np.append(listavalmin,valmin/100)
     #print("lista total: ",listavalmin)
@@ -119,11 +120,12 @@ def busqueda2(fun1,fun2):
     if(listavalores != []):
         valmin = listavalores[np.argmin(listavalores)]
     else:
-        valmin = 1000000000
-    print("Valor minimo",valmin)
+        valmin = umbral
+    #print("Valor minimo",valmin)
     return valmin
    
 
+df = pd.DataFrame(datoscsv)
 
 for i in range(0,numarch):
     #Indicamos con qué 2 archivos estamos trabajando
@@ -140,7 +142,7 @@ for i in range(0,numarch):
         Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
 
     Fs, funFR = wavfile.read(fragmento)
-    print("tam",funOG.shape[0])
+    #print("tam",funOG.shape[0])
     nom = archivos[i]
     #Si la canción es mayor o igual al fragmento se compara, es tontería buscar en una canción que sabes que no viene de ahí el fragmento
     if(funOG.shape[0] >= funFR.shape[0]):
@@ -149,15 +151,18 @@ for i in range(0,numarch):
             #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
             valtemp = busqueda2(funOG,funFR)
             #Añadimos los datos comparados al diccionario para meterlo en el csv
-            data[archivos[i]]=valtemp
+            d = {'Canción':archivos[i], "Valor disparidad" : valtemp}
+            datoscsv.update(d)
+            df = df._append(d, ignore_index = True)
             #Aquí vamos añadiendo la lista de resultados para escoger el que tenga menor valor de disparidad
             listavaldef.append(valtemp)
-            print(listavaldef)
+            #print(listavaldef)
             listanombres.append(archivos[i])
         else:
             print('Es el mismo archivo: ',archivos[i],' y ',fragmento[7:])
     else:
         print('Fragmento más grande que la canción, no es posible')
+
 #Mínimo definitivo
 valmintotaldef = np.min(listavaldef)
 
@@ -168,12 +173,9 @@ if (valmintotaldef < umbral):
     nomcanciondef = listanombres[np.argmin(listavaldef)]
     
 print("Resultado: ",nomcanciondef, ". Valor: ",valmintotaldef)
-#print(os.listdir("audios")[1])
-
 
 #Permite pasar los resultados a csv
-print(data)
-df = pd.DataFrame(data)
-df.to_csv("result.csv", index=False,encoding="utf-8",sep=";")
+df.to_csv("result.csv", index=False,encoding="utf-8")
 
 #python3 PruebasPDS.py audios audios/fragmento.wav
+#python3 PruebasPDS.py songs fragments/fragment_AAIA.wav
