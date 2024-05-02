@@ -13,11 +13,11 @@ import math
 
 
 datoscsv = {
-    'Canción': [],
-    'Valor disparidad': []
+    'Fragmento': [],
+    'Canción': []
 }
 
-umbral = 1000
+umbral = 50
 #a = open("test.txt")
 #print(a.read())
 
@@ -38,6 +38,7 @@ fragmento = sys.argv[2]
 
 #ej, samplerate = sf.read(c)
 archivos = os.listdir(carpeta)
+original = os.listdir(fragmento)
 numarch = len(os.listdir(carpeta))
 
 print(numarch)
@@ -94,9 +95,7 @@ def comparar(fun1,fun2):
     #np.append(listavalmin,valmin/100)
     #print("lista total: ",listavalmin)
     
-#lista de valores mínimos de cada canción de la carpeta a analizar
-listavaldef = []
-listanombres = []
+
 
 def busqueda2(fun1,fun2):
     #buscar en fun1 donde coincida el primer valor
@@ -127,55 +126,77 @@ def busqueda2(fun1,fun2):
 
 df = pd.DataFrame(datoscsv)
 
-for i in range(0,numarch):
-    #Indicamos con qué 2 archivos estamos trabajando
-    print(archivos[i],' Y ',fragmento[7:])
-
-    nombre, ext = os.path.splitext(archivos[i])
+for frag in original:
+    #lista de valores mínimos de cada canción de la carpeta a analizar
+    listavaldef = []
+    listanombres = []
+    
+    nombref, extf = os.path.splitext(frag)
     #Si es .mp3, el array tiene dimensiones estéreo de x,2, lo necesitamos en mono
-    if ext == ".mp3":
-       funOG ,Fs  = sf.read(carpeta + '/' + '{0}.mp3'.format(nombre))
-       if(funOG.ndim>1):
-            funOG = funOG.mean(axis=-1)    
+    if extf == ".mp3":
+        print(carpeta + '/' + '{0}.mp3'.format(nombref))
+        funFR ,Fs  = sf.read(fragmento + '/' + '{0}.mp3'.format(nombref))
+        if(funFR.ndim>1):
+           funFR = funFR.mean(axis=-1)    
     #En .wav no hay problema
     else:
-        Fs, funOG = wavfile.read(carpeta + '/' + archivos[i]) #Fs frecuencia de 16000 hercios 
+        Fs, funFR = wavfile.read(fragmento + '/' + frag) #Fs frecuencia de 16000 hercios 
 
-    Fs, funFR = wavfile.read(fragmento)
-    #print("tam",funOG.shape[0])
-    nom = archivos[i]
-    #Si la canción es mayor o igual al fragmento se compara, es tontería buscar en una canción que sabes que no viene de ahí el fragmento
-    if(funOG.shape[0] >= funFR.shape[0]):
-        #Comparamos también que no es el mismo archivo ya que coincidiría completamente
-        if(archivos[i] != fragmento[7:]):
-            #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
-            valtemp = busqueda2(funOG,funFR)
-            #Añadimos los datos comparados al diccionario para meterlo en el csv
-            d = {'Canción':archivos[i], "Valor disparidad" : valtemp}
-            datoscsv.update(d)
-            df = df._append(d, ignore_index = True)
-            #Aquí vamos añadiendo la lista de resultados para escoger el que tenga menor valor de disparidad
-            listavaldef.append(valtemp)
-            #print(listavaldef)
-            listanombres.append(archivos[i])
+
+    for canc in archivos:
+        #print("Frag:",frag,"Canc:",canc)
+        nombre, ext = os.path.splitext(canc)
+        #Si es .mp3, el array tiene dimensiones estéreo de x,2, lo necesitamos en mono
+        if ext == ".mp3":
+            funOG ,Fs  = sf.read(carpeta + '/' + '{0}.mp3'.format(nombre))
+            if(funOG.ndim>1):
+                funOG = funOG.mean(axis=-1)    
+        #En .wav no hay problema
         else:
-            print('Es el mismo archivo: ',archivos[i],' y ',fragmento[7:])
+            Fs, funOG = wavfile.read(carpeta + '/' + canc) #Fs frecuencia de 16000 hercios 
+            
+        #Si la canción es mayor o igual al fragmento se compara, es tontería buscar en una canción que sabes que no viene de ahí el fragmento
+        if(funOG.shape[0] >= funFR.shape[0]):
+            #Comparamos también que no es el mismo archivo ya que coincidiría completamente
+            if(canc != frag):
+                #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
+                valtemp = busqueda2(funOG,funFR)
+
+                #Aquí vamos añadiendo la lista de resultados para escoger el que tenga menor valor de disparidad
+                listavaldef.append(valtemp)
+                #print(listavaldef)
+                listanombres.append(canc)
+            else:
+                print('Es el mismo archivo: ',frag,' y ',canc)
+        else:
+            print('Fragmento más grande que la canción, no es posible')
+            
+    if not listavaldef:
+        d = {'Fragmento':frag, "Canción" : 'NOT_FOUND'}
+        datoscsv.update(d)
+        df = df._append(d, ignore_index = True)
     else:
-        print('Fragmento más grande que la canción, no es posible')
-
-#Mínimo definitivo
-valmintotaldef = np.min(listavaldef)
-
-nomcanciondef = 'NOT_FOUND'
-#En caso de haber alguna canción que sea menor al umbral, se asumirá que el fragmento viene de ahí, si no será Not_Found
-if (valmintotaldef < umbral):
-    #Como guarda la posición del valor mínimo, pues corresponderá a esa canción coincidente
-    nomcanciondef = listanombres[np.argmin(listavaldef)]
+        #Mínimo definitivo
+        valmintotaldef = np.min(listavaldef)
+        nomcanciondef = 'NOT_FOUND'
+        #En caso de haber alguna canción que sea menor al umbral, se asumirá que el fragmento viene de ahí, si no será Not_Found
+        if (valmintotaldef < umbral):
+            #Como guarda la posición del valor mínimo, pues corresponderá a esa canción coincidente
+            nomcanciondef = listanombres[np.argmin(listavaldef)]
+            
+        #print("Resultado: ",nomcanciondef, ". Valor: ",valmintotaldef)
+        
+        #Añadimos los datos comparados al diccionario para meterlo en el csv
+        d = {'Fragmento':frag, "Canción" : nomcanciondef}
+        datoscsv.update(d)
+        df = df._append(d, ignore_index = True)
     
-print("Resultado: ",nomcanciondef, ". Valor: ",valmintotaldef)
 
-#Permite pasar los resultados a csv
+            
 df.to_csv("result.csv", index=False,encoding="utf-8")
 
 #python3 PruebasPDS.py audios audios/fragmento.wav
 #python3 PruebasPDS.py songs fragments/fragment_AAIA.wav
+#Ejemplo AAIA es DASU
+#python3 PruebasPDS.py songs2 fragments2
+
