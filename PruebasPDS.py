@@ -9,6 +9,7 @@ import soundfile as sf
 import os
 import matplotlib.pyplot as plt
 import math
+from algorit_huella_prueba import identificar
 
 
 
@@ -17,6 +18,7 @@ datoscsv = {
     'Canción': []
 }
 
+resultado = []
 umbral = 50
 #a = open("test.txt")
 #print(a.read())
@@ -161,7 +163,12 @@ for frag in original:
             if(canc != frag):
                 #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
                 valtemp = busqueda2(funOG,funFR)
-
+                
+                #espectograma = extraer_espectograma(funOG, Fs)
+                #res = identificar(espectograma,lista_canciones)
+                #elemento = [frag,res]
+                #resultado.append(elemento)
+                
                 #Aquí vamos añadiendo la lista de resultados para escoger el que tenga menor valor de disparidad
                 listavaldef.append(valtemp)
                 #print(listavaldef)
