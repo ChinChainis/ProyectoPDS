@@ -9,13 +9,14 @@ import soundfile as sf
 import os
 import matplotlib.pyplot as plt
 import math
-from algorit_huella_prueba import identificar
+import algorit_huella_prueba as alg
+
 
 
 
 datoscsv = {
-    'Fragmento': [],
-    'Canción': []
+    'fragment': [],
+    'song': []
 }
 
 resultado = []
@@ -126,13 +127,30 @@ def busqueda2(fun1,fun2):
     return valmin
    
 
+lista_de_listas = []
+
+for canc in archivos:
+    nombre, ext = os.path.splitext(canc)
+    
+    #Si es .mp3, el array tiene dimensiones estéreo de x,2, lo necesitamos en mono
+    if ext == ".mp3":
+       funOG ,Fs  = sf.read(carpeta + '/' + '{0}.mp3'.format(nombre))
+       if(funOG.ndim>1):
+            funOG = funOG.mean(axis=-1)    
+    #En .wav no hay problema
+    else:
+        Fs, funOG = wavfile.read(carpeta + '/' + canc) #Fs frecuencia de 16000 hercios 
+        
+    espectograma = alg.extraer_espectograma(funOG, Fs)
+    elemento =[nombre,espectograma]
+    lista_de_listas.append(elemento)
+
+resultado = []
+
 df = pd.DataFrame(datoscsv)
 
+
 for frag in original:
-    #lista de valores mínimos de cada canción de la carpeta a analizar
-    listavaldef = []
-    listanombres = []
-    
     nombref, extf = os.path.splitext(frag)
     #Si es .mp3, el array tiene dimensiones estéreo de x,2, lo necesitamos en mono
     if extf == ".mp3":
@@ -143,64 +161,16 @@ for frag in original:
     #En .wav no hay problema
     else:
         Fs, funFR = wavfile.read(fragmento + '/' + frag) #Fs frecuencia de 16000 hercios 
-
-
-    for canc in archivos:
-        #print("Frag:",frag,"Canc:",canc)
-        nombre, ext = os.path.splitext(canc)
-        #Si es .mp3, el array tiene dimensiones estéreo de x,2, lo necesitamos en mono
-        if ext == ".mp3":
-            funOG ,Fs  = sf.read(carpeta + '/' + '{0}.mp3'.format(nombre))
-            if(funOG.ndim>1):
-                funOG = funOG.mean(axis=-1)    
-        #En .wav no hay problema
-        else:
-            Fs, funOG = wavfile.read(carpeta + '/' + canc) #Fs frecuencia de 16000 hercios 
-            
-        #Si la canción es mayor o igual al fragmento se compara, es tontería buscar en una canción que sabes que no viene de ahí el fragmento
-        if(funOG.shape[0] >= funFR.shape[0]):
-            #Comparamos también que no es el mismo archivo ya que coincidiría completamente
-            if(canc != frag):
-                #Se añade valor mínimo de una canción concreta a la lista de valores mínimos de cada canción a comparar
-                valtemp = busqueda2(funOG,funFR)
-                
-                #espectograma = extraer_espectograma(funOG, Fs)
-                #res = identificar(espectograma,lista_canciones)
-                #elemento = [frag,res]
-                #resultado.append(elemento)
-                
-                #Aquí vamos añadiendo la lista de resultados para escoger el que tenga menor valor de disparidad
-                listavaldef.append(valtemp)
-                #print(listavaldef)
-                listanombres.append(canc)
-            else:
-                print('Es el mismo archivo: ',frag,' y ',canc)
-        else:
-            print('Fragmento más grande que la canción, no es posible')
-            
-    if not listavaldef:
-        d = {'Fragmento':frag, "Canción" : 'NOT_FOUND'}
-        datoscsv.update(d)
-        df = df._append(d, ignore_index = True)
-    else:
-        #Mínimo definitivo
-        valmintotaldef = np.min(listavaldef)
-        nomcanciondef = 'NOT_FOUND'
-        #En caso de haber alguna canción que sea menor al umbral, se asumirá que el fragmento viene de ahí, si no será Not_Found
-        if (valmintotaldef < umbral):
-            #Como guarda la posición del valor mínimo, pues corresponderá a esa canción coincidente
-            nomcanciondef = listanombres[np.argmin(listavaldef)]
-            
-        #print("Resultado: ",nomcanciondef, ". Valor: ",valmintotaldef)
         
-        #Añadimos los datos comparados al diccionario para meterlo en el csv
-        d = {'Fragmento':frag, "Canción" : nomcanciondef}
-        datoscsv.update(d)
-        df = df._append(d, ignore_index = True)
-    
-
-            
+    espectograma = alg.extraer_espectograma(funFR, Fs)
+    res = alg.identificar(espectograma,lista_de_listas)
+    elemento = [frag,res]
+    d = {'fragment':nombref, "song" : res}
+    datoscsv.update(d)
+    df = df._append(d, ignore_index = True)
+    #resultado.append(elemento)
 df.to_csv("result.csv", index=False,encoding="utf-8")
+
 
 #python3 PruebasPDS.py audios audios/fragmento.wav
 #python3 PruebasPDS.py songs fragments/fragment_AAIA.wav

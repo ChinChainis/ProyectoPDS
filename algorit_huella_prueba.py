@@ -19,15 +19,16 @@ from scipy.spatial.distance import euclidean
 #b = sys.argv
 
 
-carpeta = "songs2"
-fragmentos = "fragments2"
+
+carpeta = "songs"
+fragmentos = "fragments"
 
 archivos = os.listdir(carpeta)
 numarch = len(os.listdir(carpeta))
 
 datoscsv = {
-    'Fragmento': [],
-    'Canción': []
+    'fragment': [],
+    'song': []
 }
 
 
@@ -131,7 +132,7 @@ for frag in archivos2:
     espectograma = extraer_espectograma(funFR, Fs)
     res = identificar(espectograma,lista_de_listas)
     elemento = [frag,res]
-    d = {'Fragmento':frag, "Canción" : res}
+    d = {'fragment':frag, "song" : res}
     datoscsv.update(d)
     df = df._append(d, ignore_index = True)
     #resultado.append(elemento)
