@@ -2,12 +2,14 @@ import numpy as np
 import pandas as pd
 import sys
 import scipy as sc #procesamiento, para transformada fourier, interpolacion etc
+from scipy import signal
 from scipy.io import wavfile
 import soundfile as sf
 import os
 import matplotlib.pyplot as plt
 import math
 import algorit_huella_prueba as alg
+from scipy.spatial.distance import euclidean
 
 umbral = 50
 
@@ -93,3 +95,148 @@ def busqueda2(fun1,fun2):
     #print("Valor minimo",valmin)
     return valmin
    
+   
+def decode_dtmf(seg, Fs):
+    dur_segmento=0.5
+    seg = seg.astype(float)
+    
+    # Guardamos las frecuencias
+    filtered_freqs = []
+
+    # Se mueve cada 4000 elementos (un tono son 4000 elementos y 4000 de sonido)
+    #for i in range(0, len(seg), int(Fs*dur_segmento)):
+    #    # Trozo a analizar
+    #    cut_sig = seg[i:i+int(Fs*dur_segmento)]
+
+        # FFT
+    #    fft_sig = np.fft.rfft(cut_sig, Fs)
+    #    fft_sig = np.abs(fft_sig)
+
+    #    freq_max_seg = np.max(fft_sig)        
+    #    filtered_freqs.append(freq_max_seg)
+        
+    N = len(seg)
+
+    fft = np.fft.rfft(seg)
+
+    transform_y = 2.0 / N * np.abs(fft[0:N//2])    
+    #maxfreq = np.max(filtered_freqs)
+    #norm_freqs = filtered_freqs / maxfreq
+    all_peaks, props = signal.find_peaks(transform_y)
+
+    peaks, props = signal.find_peaks(transform_y, prominence=0, distance=10000)
+
+    n_peaks = 8
+
+    # Get the n_peaks largest peaks from the prominences
+
+    # This is an argpartition
+
+    # Useful explanation: https://kanoki.org/2020/01/14/find-k-smallest-and-largest-values-and-its-indices-in-a-numpy-array/
+
+    largest_peaks_indices = np.argpartition(props["prominences"], -n_peaks)[-n_peaks:]
+
+    largest_peaks = peaks[largest_peaks_indices]
+    
+    print(len(largest_peaks))
+    print('frecuencias canción cada 0.5s: ', largest_peaks)
+    return largest_peaks
+
+
+
+def create_constellation(audio, Fs):
+
+    # Parameters
+
+    window_length_seconds = 0.5
+
+    window_length_samples = int(window_length_seconds * Fs)
+
+    window_length_samples += window_length_samples % 2
+
+    num_peaks = 10
+
+    # Pad the song to divide evenly into windows
+
+    amount_to_pad = window_length_samples - audio.size % window_length_samples
+
+    song_input = np.pad(audio, (0, amount_to_pad))
+
+    # Perform a short time fourier transform
+
+    frequencies, times, stft = signal.stft(
+
+        song_input, Fs, nperseg=window_length_samples, nfft=window_length_samples, return_onesided=True
+
+    )
+
+    constellation_map = []
+
+    for time_idx, window in enumerate(stft.T):
+
+        # Spectrum is by default complex. 
+
+        # We want real values only
+
+        spectrum = abs(window)
+
+        # Find peaks - these correspond to interesting features
+
+        # Note the distance - want an even spread across the spectrum
+
+        peaks, props = signal.find_peaks(spectrum, prominence=0, distance=200)
+
+        # Only want the most prominent peaks
+
+        # With a maximum of 15 per time slice
+
+        n_peaks = min(num_peaks, len(peaks))
+
+        # Get the n_peaks largest peaks from the prominences
+
+        # This is an argpartition
+
+        # Useful explanation: https://kanoki.org/2020/01/14/find-k-smallest-and-largest-values-and-its-indices-in-a-numpy-array/
+
+        largest_peaks = np.argpartition(props["prominences"], -n_peaks)[-n_peaks:]
+
+        for peak in peaks[largest_peaks]:
+
+            frequency = frequencies[peak]
+
+            constellation_map.append([time_idx, frequency])
+
+    print(constellation_map)
+    return constellation_map
+
+def comparar(frag, lista):
+    distancia_min = float('inf')
+    cancion = None
+    pos = None
+    
+    for elemento in lista:
+        len(elemento[1])
+        # Calcula la distancia euclidiana entre las huellas digitales
+        #for i in range(0,len(elemento[1]),len(frag)):
+        for i in range(0,len(elemento[1]) - len(frag)):
+
+            can_trim_actual=elemento[1][i:i+len(frag)]
+            distancia = euclidean(frag,can_trim_actual)
+            #print(distancia)
+            # Actualiza la canción identificada si la distancia es menor que el mínimo
+            if distancia < distancia_min:
+                distancia_min = distancia
+                cancion = elemento[0]
+
+        print("DM: ",distancia_min)
+        cancion = elemento[0]
+    
+    #Umbral de corte
+    umbral = 0.5
+    print("canc: ",cancion)
+    # Si la distancia mínima está por debajo del umbral, considera que es la misma canción
+    if distancia_min < umbral:
+        return cancion
+    else:
+        return "NOT_FOUND"
+    

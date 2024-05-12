@@ -10,6 +10,8 @@ import os
 import matplotlib.pyplot as plt
 import math
 import algorit_huella_prueba as alg
+import funciones as func
+
 
 
 
@@ -47,7 +49,14 @@ for canc in archivos:
         
     espectograma = alg.extraer_espectograma(funOG, Fs)
     elemento =[nombre,espectograma]
+    #lista_canciones.append(elemento)
+    
+    print(canc)
+    frecuencias = func.create_constellation(funOG,Fs)
+    #elemento =[nombre,frecuencias]
     lista_canciones.append(elemento)
+    
+
 
 resultado = []
 
@@ -68,7 +77,13 @@ for frag in original:
         
     espectograma = alg.extraer_espectograma(funFR, Fs)
     res = alg.identificar(espectograma,lista_canciones)
-    elemento = [frag,res]
+    
+    print(frag)
+    frag_a_comp = func.create_constellation(funFR,Fs)
+    
+    #res = func.comparar(frag_a_comp,lista_canciones)
+    
+    #elemento = [frag,res]
     d = {'fragment':nombref, "song" : res}
     
     #lista_canciones.pop( pos )
