@@ -142,73 +142,6 @@ def decode_dtmf(seg, Fs):
     print('frecuencias canción cada 0.5s: ', largest_peaks)
     return largest_peaks
 
-
-
-def create_constellation(audio, Fs):
-
-    # Parameters
-
-    window_length_seconds = 0.5
-
-    window_length_samples = int(window_length_seconds * Fs)
-
-    window_length_samples += window_length_samples % 2
-
-    num_peaks = 10
-
-    # Pad the song to divide evenly into windows
-
-    amount_to_pad = window_length_samples - audio.size % window_length_samples
-
-    song_input = np.pad(audio, (0, amount_to_pad))
-
-    # Perform a short time fourier transform
-
-    frequencies, times, stft = signal.stft(
-
-        song_input, Fs, nperseg=window_length_samples, nfft=window_length_samples, return_onesided=True
-
-    )
-
-    constellation_map = []
-
-    for time_idx, window in enumerate(stft.T):
-
-        # Spectrum is by default complex. 
-
-        # We want real values only
-
-        spectrum = abs(window)
-
-        # Find peaks - these correspond to interesting features
-
-        # Note the distance - want an even spread across the spectrum
-
-        peaks, props = signal.find_peaks(spectrum, prominence=0, distance=200)
-
-        # Only want the most prominent peaks
-
-        # With a maximum of 15 per time slice
-
-        n_peaks = min(num_peaks, len(peaks))
-
-        # Get the n_peaks largest peaks from the prominences
-
-        # This is an argpartition
-
-        # Useful explanation: https://kanoki.org/2020/01/14/find-k-smallest-and-largest-values-and-its-indices-in-a-numpy-array/
-
-        largest_peaks = np.argpartition(props["prominences"], -n_peaks)[-n_peaks:]
-
-        for peak in peaks[largest_peaks]:
-
-            frequency = frequencies[peak]
-
-            constellation_map.append([time_idx, frequency])
-
-    print(constellation_map)
-    return constellation_map
-
 def comparar(frag, lista):
     distancia_min = float('inf')
     cancion = None
@@ -240,3 +173,116 @@ def comparar(frag, lista):
     else:
         return "NOT_FOUND"
     
+
+def create_constellation(audio, Fs):
+
+    dur_segmento = 0.5
+    #44100*0.5=22050 digitos por array
+    window_length_samples = int(dur_segmento * Fs)
+    window_length_samples += window_length_samples % 2
+
+    num_peaks = 10
+
+    #Dividir la canción en segmentos de igual tamaño según el tiempo especificado
+
+    amount_to_pad = window_length_samples - audio.size % window_length_samples
+
+    #rellena el array de la canción con 0
+    song_input = np.pad(audio, (0, amount_to_pad))
+
+    #Transformada de fourier en tiempo discreto según 
+    # el array padeado de antes, la frecuencia y las ventanas de tiempo del principio de la función
+    frequencies, times, stft = signal.stft(song_input, Fs, nperseg=window_length_samples, nfft=window_length_samples, return_onesided=True)
+
+    #Aquí contredremos la constelación que es el agrupamiento de las frecuencias extraidas de una canción, 
+    #solo cogeremos un número reducido de picos para analizar
+    constellation_map = []
+
+    for time_idx, window in enumerate(stft.T):
+
+        #Solo valores reales del espectro
+
+        spectrum = abs(window)
+
+        #picos son las frecuencias mayores encontradas en una distancia especificada
+        picos, props = signal.find_peaks(spectrum, prominence=0, distance=200)
+        n_peaks = min(num_peaks, len(picos))
+
+        #Obtener los n mayores picos de la secuencia cada 10 picos como mínimo
+
+        largest_peaks = np.argpartition(props["prominences"], -n_peaks)[-n_peaks:]
+
+        for peak in picos[largest_peaks]:
+            frequency = frequencies[peak]
+            #generamos constelación
+            constellation_map.append([time_idx, frequency])
+
+    #print(constellation_map)
+    return constellation_map
+
+def create_hashes(constellation_map, song_id=None):
+    hashes = {}
+    #la frecuencia de las canciones es 44,1 KHz pero ponemos un poco más para tener un poco de offset
+    upper_frequency = 44_200
+    frequency_bits = 10
+    
+    #Recorremos la constelación dada siendo idx el nombre, time el segundo y freq la frencuencia en ese punto
+    for idx, (time, freq) in enumerate(constellation_map):
+        # Compara cada 100 valores de la constelación
+        for other_time, other_freq in constellation_map[idx : idx + 100]:
+            diff = other_time - time
+            # Si la diferencia de tiempo es muy grande obvia este emparejamiento
+            if diff <= 1 or diff > 10:
+                continue
+
+            #Coloca las frecuencias en hercios en 'contenedores' de 1024bits
+            freq_binned = freq / upper_frequency * (2 ** frequency_bits)
+            other_freq_binned = other_freq / upper_frequency * (2 ** frequency_bits)
+
+            #Y ahora hacemos los hash de 32 bits, la database queda un poco grande pero solo hay que hacerla una vez
+            hash = int(freq_binned) | (int(other_freq_binned) << 10) | (int(diff) << 20)
+            hashes[hash] = (time, song_id)
+    return hashes
+
+
+def comparar2(hashes,database):
+    matches_per_song = {}
+    #recorremos los hashes y vemos las coincidencias y creamos una nueva lista de coincidencias con canciones, 
+    #para luego concretar cuál es el mejor matching
+    for hash, (sample_time, _) in hashes.items():
+        if hash in database:
+            matching_occurences = database[hash]
+            for source_time, song_index in matching_occurences:
+                if song_index not in matches_per_song:
+                    matches_per_song[song_index] = []
+                matches_per_song[song_index].append((hash, sample_time, source_time))
+
+    #lista de puntuaciones
+    scores = {}
+    #puntuación máxima --> nos servirá de umbral
+    punt_max = 0
+    #nombre de la canción ganadora --> lo igualamos a NOT_FOUND por defecto
+    res_cancion = ""
+    #song_index es el nombre de la canción
+    for song_index, matches in matches_per_song.items():
+        song_scores_by_offset = {}
+        for hash, sample_time, source_time in matches:
+            #vemos la diferencia de tiempo para escoger las frecuencias que encajen
+            delta = source_time - sample_time
+            if delta not in song_scores_by_offset:
+                song_scores_by_offset[delta] = 0
+            #empezamos a añadir el valor de puntuación
+            song_scores_by_offset[delta] += 1
+
+        max = (0, 0)
+        #seleccionamos la puntuación máxima
+        for offset, score in song_scores_by_offset.items():
+            if score > max[1]:
+                max = (offset, score)
+        
+        scores[song_index] = max
+        if (punt_max < max[1]):
+            punt_max = max[1]
+            res_cancion = song_index
+    
+    return res_cancion
