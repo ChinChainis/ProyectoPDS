@@ -39,7 +39,12 @@ fragmentos = "fragments"
 archivos = os.listdir(carpeta)
 numarch = len(os.listdir(carpeta))
 
+original = os.listdir(fragmentos)
 
+datoscsv = {
+    'fragment': [],
+    'song': []
+}
 
 
 def extraer_espectograma(x,fs):
@@ -84,6 +89,7 @@ def identificar(espectograma, lista):
 
 
 lista_de_listas = []
+df = pd.DataFrame(datoscsv)
 
 for i in range(0,numarch):
     nombre, ext = os.path.splitext(archivos[i])
@@ -106,11 +112,17 @@ numarch2 = len(os.listdir(fragmentos))
 resultado = []
 
 
-for i in range(0,numarch2):
+for frag in original:
+    nombref, extf = os.path.splitext(frag)
     Fs, funFR = wavfile.read(fragmentos + '/' + archivos2[i])
     espectograma = extraer_espectograma(funFR, Fs)
     res = identificar(espectograma,lista_de_listas)
-    elemento = [archivos2[i],res]
-    resultado.append(elemento)
+    #elemento = [archivos2[i],res]
+    #resultado.append(elemento)
+    nombreres, extres = os.path.splitext(res)
+    d = {'fragment':nombref, "song" : nombreres}
+    datoscsv.update(d)
+    df = df._append(d, ignore_index = True)
 
-print(resultado)
+#print(resultado)
+df.to_csv("result.csv", index=False,encoding="utf-8")
