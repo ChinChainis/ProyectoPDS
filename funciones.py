@@ -32,7 +32,7 @@ def representar(fun1,fun2):
     
     
     
-def comparar(fun1,fun2):
+def busqueda1(fun1,fun2):
     #fun1 canción a comparar, fun2 fragmento que comparamos
     sumerror = 0
     #sumerror sumatoria del algoritmo básico
@@ -68,6 +68,28 @@ def comparar(fun1,fun2):
     #np.append(listavalmin,valmin/100)
     #print("lista total: ",listavalmin)
     
+def busqueda12(fun1,fun2):
+    #buscar en fun1 donde coincida el primer valor
+    #Cuando coincida empezar comparación y anotar error en lista
+    #He puesto un valor  temporal de error de 1000000000 por si no encuentra un valor similar, 
+    #este debería ser como el umbral
+    #mismo proceso que antes, seleccionar la canción con menor error
+    listavalores =[]
+    sumerror=0
+    for i in range(0,fun1.shape[0]):
+        if(fun1.shape[0]-i > fun2.shape[0]):
+            recorref1 = fun1[i:fun2.shape[0]+i]
+            restaarrays = np.int64(np.subtract(fun2,recorref1))
+            potarrays = np.power(restaarrays,2)
+            sumerror = np.sum(potarrays)
+            listavalores.append(sumerror)
+            sumerror = 0
+    if(listavalores != []):
+        valmin = np.min(listavalores)
+    else:
+        valmin = umbral
+    #print("Valor minimo",valmin)
+    return valmin
     
 def busqueda2(fun1,fun2):
     #buscar en fun1 donde coincida el primer valor
@@ -89,7 +111,7 @@ def busqueda2(fun1,fun2):
                 listavalores.append(sumerror)
                 sumerror = 0
     if(listavalores != []):
-        valmin = listavalores[np.argmin(listavalores)]
+        valmin = np.min(listavalores)
     else:
         valmin = umbral
     #print("Valor minimo",valmin)
@@ -138,8 +160,8 @@ def decode_dtmf(seg, Fs):
 
     largest_peaks = peaks[largest_peaks_indices]
     
-    print(len(largest_peaks))
-    print('frecuencias canción cada 0.5s: ', largest_peaks)
+    #print(len(largest_peaks))
+    #print('frecuencias canción cada 0.5s: ', largest_peaks)
     return largest_peaks
 
 def comparar(frag, lista):
@@ -148,7 +170,6 @@ def comparar(frag, lista):
     pos = None
     
     for elemento in lista:
-        len(elemento[1])
         # Calcula la distancia euclidiana entre las huellas digitales
         #for i in range(0,len(elemento[1]),len(frag)):
         for i in range(0,len(elemento[1]) - len(frag)):
@@ -161,12 +182,12 @@ def comparar(frag, lista):
                 distancia_min = distancia
                 cancion = elemento[0]
 
-        print("DM: ",distancia_min)
+        #print("DM: ",distancia_min)
         cancion = elemento[0]
     
     #Umbral de corte
     umbral = 0.5
-    print("canc: ",cancion)
+    #print("canc: ",cancion)
     # Si la distancia mínima está por debajo del umbral, considera que es la misma canción
     if distancia_min < umbral:
         return cancion
@@ -260,9 +281,15 @@ def comparar2(hashes,database):
     #lista de puntuaciones
     scores = {}
     #puntuación máxima --> nos servirá de umbral
-    punt_max = 0
+    #0 -> 5.2%
+    #250 -> 2.5%
+    #300 -> 2.1%
+    #350 -> 2.6%
+    #500 -> 4.7%
+    #1000 ->17.20%
+    punt_max = 300
     #nombre de la canción ganadora --> lo igualamos a NOT_FOUND por defecto
-    res_cancion = ""
+    res_cancion = "NOT_FOUND"
     #song_index es el nombre de la canción
     for song_index, matches in matches_per_song.items():
         song_scores_by_offset = {}

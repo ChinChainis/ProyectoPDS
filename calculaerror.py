@@ -66,8 +66,8 @@ RESULTS_FILE = 'result.csv'   # <<<--- Aseguraos de modificar esto con el nombre
 error_rate, confusion_df = calculate_error_rate(GROUND_TRUTH_FILE, RESULTS_FILE, 'relative')
 print(f"TASA DE ERROR: {100*error_rate:.2f}%")
 
-print("RESULTADOS GLOBALES:")
-confusion_df
+print("RESULTADOS GLOBALES: ",confusion_df)
+
 
 # Ploteamos la matriz de confusión como un gráfico de barras
 confusion_df.plot.bar(legend=False)
