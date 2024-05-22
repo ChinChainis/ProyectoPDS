@@ -45,7 +45,7 @@ for frag in original:
            funFR = funFR.mean(axis=-1)    
     #En .wav no hay problema
     else:
-        Fs, funFR = wavfile.read(fragmento + '/' + frag) #Fs frecuencia de 16000 hercios 
+        Fs, funFR = wavfile.read(fragmento + '/' + frag)
 
     frag_a_comp = func.create_constellation(funFR,Fs)
     hash = func.create_hashes(frag_a_comp,frag)
