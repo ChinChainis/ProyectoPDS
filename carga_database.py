@@ -41,7 +41,8 @@ for canc in archivos:
     #se guarda solo el nombre del archivo sin la extensión        
     constelacion = func.create_constellation(funOG, Fs)
     hashes = func.create_hashes(constelacion, canc)
-    #un hash se compone de parejas de 2 frecuencias y la distancia entre ellas. Además un índice para saber a qué canción pertenece
+    #un hash se compone de parejas de 2 frecuencias y la distancia entre ellas. 
+    #Además un índice para saber a qué canción pertenece
     for hash, time_index_pair in hashes.items():
         if hash not in database:
             database[hash] = []

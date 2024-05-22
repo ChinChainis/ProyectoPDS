@@ -63,7 +63,7 @@ def identificar(espectograma, lista):
             cancion = elemento[0]
     
     #Umbral de corte
-    umbral = 0.0001
+    umbral = 0.00015
     
     # Si la distancia mínima está por debajo del umbral, considera que es la misma canción
     if distancia_min < umbral:
