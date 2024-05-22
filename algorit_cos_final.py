@@ -82,28 +82,6 @@ def identificar(espectograma, lista):
     else:
         return "NOT_FOUND"
     
-def identificar_eucld(espectograma, lista):
-    distancia_min = float('inf')
-    cancion = None
-    
-    for elemento in lista:
-        len(elemento[1])
-        # Calcula la distancia euclidiana entre las huellas digitales
-        distancia = euclidean(espectograma,elemento[1])
-        # Actualiza la canción identificada si la distancia es menor que el mínimo
-        if distancia < distancia_min:
-           
-            distancia_min = distancia
-            cancion = elemento[0]
-    
-    # Define un umbral de similitud (ajústalo según sea necesario)
-    umbral = 0.00015
-    
-    # Si la distancia mínima está por debajo del umbral, considera que es la misma canción
-    if distancia_min < umbral:
-        return cancion
-    else:
-        return "NOT_FOUND"
 
 lista_de_listas = []
 
