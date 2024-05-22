@@ -9,11 +9,13 @@ import soundfile as sf
 import os
 import matplotlib.pyplot as plt
 import math
-import algorit_huella_prueba as alg
 import funciones as func
 import pickle
 from typing import List, Dict, Tuple
+import time
 
+
+start_time = time.time()
 
 datoscsv = {
     'fragment': [],
@@ -56,10 +58,19 @@ for frag in original:
     datoscsv.update(d)
     df = df._append(d, ignore_index = True)
 df.to_csv("result.csv", index=False,encoding="utf-8")
+print("--- %s seconds ---" % (time.time() - start_time))
 
 
 #python3 PruebasPDS.py audios audios/fragmento.wav
 #python3 PruebasPDS.py songs fragments/fragment_AAIA.wav
 #Ejemplo AAIA es DASU
 #python3 main_constelacion.py fragments
+#--- 622.4353518486023 seconds ---
+# TASA DE ERROR: 2.10%
+# RESULTADOS GLOBALES:          Percentage
+# Correct (Song->Song)          98.0
+# Correct (NF->NF)              96.0
+# Incorrect (Song->Song)         0.0
+# Incorrect (Song->NF)           2.0
+# Incorrect (NF->Song)           4.0
 

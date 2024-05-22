@@ -238,7 +238,7 @@ def create_constellation(audio, Fs):
             #generamos constelación
             constellation_map.append([time_idx, frequency])
 
-    #print(constellation_map)
+    #print('aa',constellation_map)
     return constellation_map
 
 def create_hashes(constellation_map, song_id=None):
