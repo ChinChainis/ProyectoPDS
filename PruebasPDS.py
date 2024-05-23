@@ -46,7 +46,7 @@ lista_canciones = []
     # Incorrect (Song->Song)   68.736842
     # Incorrect (Song->NF)      2.947368
     # Incorrect (NF->Song)     96.000000
-modo = input('1: Algoritmo básico\n2: Algoritmo Básico mejorado\n3:Búsqueda por espectograma\nOpción:') 
+modo = input('1: Algoritmo básico\n2: Algoritmo Básico mejorado\n3: Búsqueda por espectograma\n4: Búsqueda por espectrograma-coseno\nOpción:') 
 
 for canc in archivos:
     nombre, ext = os.path.splitext(canc)
@@ -64,7 +64,7 @@ for canc in archivos:
         vectorcanc = funOG
         elemento =[nombre,vectorcanc]
         lista_canciones.append(elemento)
-    if(modo == '3'):
+    if(modo == '3' or modo == '4'):
         espectograma = alg.extraer_espectograma(funOG, Fs)
         elemento =[nombre,espectograma]
         lista_canciones.append(elemento)
@@ -105,7 +105,12 @@ for frag in original:
                 if(valmin < valmintotal):
                     res = elemento[0]
                     valmintotal=valmin
+                    
     if(modo == '3'):
+        espectograma = alg.extraer_espectograma(funFR, Fs)
+        res = alg.identificar(espectograma,lista_canciones)
+        
+    if(modo == '4'):
         espectograma = alg.extraer_espectograma(funFR, Fs)
         res = alg.identificar2(espectograma,lista_canciones)
 
