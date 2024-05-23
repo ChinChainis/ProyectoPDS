@@ -279,7 +279,7 @@ def comparar2(hashes,database):
                 matches_por_canc[song_index].append((hash, sample_time, source_time))
 
     #lista de puntuaciones
-    scores = {}
+    puntuaciones = {}
     #puntuación máxima --> nos servirá de umbral
     #0 -> 5.2%
     #250 -> 2.5%
@@ -292,22 +292,22 @@ def comparar2(hashes,database):
     res_cancion = "NOT_FOUND"
     #song_index es el nombre de la canción
     for song_index, matches in matches_por_canc.items():
-        puntuaciones = {}
+        puntuaciones_por_offset = {}
         for hash, sample_time, source_time in matches:
             #vemos la diferencia de tiempo para escoger las frecuencias que encajen
             delta = source_time - sample_time
-            if delta not in puntuaciones:
-                puntuaciones[delta] = 0
+            if delta not in puntuaciones_por_offset:
+                puntuaciones_por_offset[delta] = 0
             #empezamos a añadir el valor de puntuación
-            puntuaciones[delta] += 1
+            puntuaciones_por_offset[delta] += 1
 
         max = (0, 0)
         #seleccionamos la puntuación máxima
-        for offset, score in puntuaciones.items():
+        for offset, score in puntuaciones_por_offset.items():
             if score > max[1]:
                 max = (offset, score)
         
-        scores[song_index] = max
+        puntuaciones[song_index] = max
         if (punt_max < max[1]):
             punt_max = max[1]
             res_cancion = song_index
