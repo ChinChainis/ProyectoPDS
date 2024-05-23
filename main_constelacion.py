@@ -61,8 +61,6 @@ df.to_csv("result.csv", index=False,encoding="utf-8")
 print("--- %s seconds ---" % (time.time() - start_time))
 
 
-#python3 PruebasPDS.py audios audios/fragmento.wav
-#python3 PruebasPDS.py songs fragments/fragment_AAIA.wav
 #Ejemplo AAIA es DASU
 #python3 main_constelacion.py fragments
 #--- 622.4353518486023 seconds ---
