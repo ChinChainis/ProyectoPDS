@@ -24,7 +24,7 @@ numarch = len(os.listdir(carpeta))
 
 print(numarch)
 
-lista_canciones = []
+#inicialización de la database
 database: Dict[int, List[Tuple[int, int]]] = {}
 
 for canc in archivos:
@@ -38,9 +38,11 @@ for canc in archivos:
     #En .wav no hay problema
     else:
         Fs, funOG = wavfile.read(carpeta + '/' + canc) #Fs frecuencia de 16000 hercios 
-            
+    #se guarda solo el nombre del archivo sin la extensión        
     constelacion = func.create_constellation(funOG, Fs)
     hashes = func.create_hashes(constelacion, canc)
+    #un hash se compone de parejas de 2 frecuencias y la distancia entre ellas. 
+    #Además un índice para saber a qué canción pertenece
     for hash, time_index_pair in hashes.items():
         if hash not in database:
             database[hash] = []
