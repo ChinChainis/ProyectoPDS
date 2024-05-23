@@ -1,73 +1,102 @@
 import numpy as np
 import pandas as pd
-import sys
+import os
+import time
 from scipy.io import wavfile
 import soundfile as sf
-import os
-import concurrent.futures
-from concurrent.futures import ProcessPoolExecutor
-import time
-start_time = time.time()
+from python_speech_features import mfcc
+from scipy.spatial.distance import euclidean
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import pickle
 
-# Función para calcular el espectrograma usando la Transformada de Fourier
-def calcular_espectrograma(audio, sample_rate, n_fft=2048, hop_length=512):
-    espectrograma = np.abs(np.fft.rfft(audio, n=n_fft))
-    return espectrograma
+def calcular_mfcc(audio, sample_rate, num_ceps=13, hop_length=512):
+    mfcc_feat = mfcc(audio, sample_rate, numcep=num_ceps, winstep=hop_length / sample_rate)
+    return mfcc_feat
 
-# Función para comparar dos espectrogramas
-def comparar_espectrogramas(espectro1, espectro2):
-    min_len = min(len(espectro1), len(espectro2))
-    espectro1 = espectro1[:min_len]
-    espectro2 = espectro2[:min_len]
-    error = np.sum((espectro1 - espectro2) ** 2)
+def comparar_mfcc(mfcc1, mfcc2):
+    min_len = min(len(mfcc1), len(mfcc2))
+    mfcc1 = mfcc1[:min_len]
+    mfcc2 = mfcc2[:min_len]
+    error = np.sum([euclidean(mfcc1[i], mfcc2[i]) for i in range(min_len)])
     return error
 
-# Función para procesar una combinación de fragmento y canción
-def procesar_combinacion(archivo_fragmento, archivo_cancion, carpeta_fragmentos, carpeta_canciones, umbral):
+def leer_audio(file_path):
+    if file_path.endswith('.mp3'):
+        audio, sample_rate = sf.read(file_path)
+    else:
+        sample_rate, audio = wavfile.read(file_path)
+    if audio.ndim > 1:
+        audio = audio.mean(axis=-1)  # Convertir a mono si es estéreo
+    return audio, sample_rate
+
+def procesar_combinacion(archivo_fragmento, archivo_cancion, carpeta_fragmentos, carpeta_canciones, umbral, mfcc_canciones_cache):
     resultados = []
-    Fs_frag, funFR = wavfile.read(os.path.join(carpeta_fragmentos, archivo_fragmento))
-    if funFR.ndim > 1:
-        funFR = funFR.mean(axis=-1)  # Convertir a mono si es estéreo
-    espectroFR = calcular_espectrograma(funFR, Fs_frag)
+    frag_path = os.path.join(carpeta_fragmentos, archivo_fragmento)
+    funFR, Fs_frag = leer_audio(frag_path)
+    mfccFR = calcular_mfcc(funFR, Fs_frag)
 
-    nombre, ext = os.path.splitext(archivo_cancion)
-    if ext == ".mp3" or ext == ".wav":
-        # Leer archivo de audio
-        if ext == ".mp3":
-            audio, Fs = sf.read(os.path.join(carpeta_canciones, archivo_cancion))
-            if audio.ndim > 1:
-                audio = audio.mean(axis=-1)  # Convertir a mono si es estéreo
-        else:
-            Fs, audio = wavfile.read(os.path.join(carpeta_canciones, archivo_cancion))
+    if archivo_cancion in mfcc_canciones_cache:
+        mfcc_cancion, Fs = mfcc_canciones_cache[archivo_cancion]
+    else:
+        cancion_path = os.path.join(carpeta_canciones, archivo_cancion)
+        audio, Fs = leer_audio(cancion_path)
+        mfcc_cancion = calcular_mfcc(audio, Fs)
+        mfcc_canciones_cache[archivo_cancion] = (mfcc_cancion, Fs)
 
-        # Solo procesar si la canción es más larga que el fragmento
-        if len(audio) >= len(funFR):
-            espectroOG = calcular_espectrograma(audio, Fs)
-            val_disparidad = comparar_espectrogramas(espectroOG, espectroFR)
-            resultados.append((archivo_cancion, archivo_fragmento, val_disparidad))
+    mejor_disparidad = float('inf')
+    mejor_segmento = None
+
+    ventana_tamaño = len(mfccFR)
+    ventana_paso = Fs // 5  # Desplazamiento de 0.2 segundos
+
+    for i in range(0, len(mfcc_cancion) - ventana_tamaño, ventana_paso):
+        segmento_mfcc = mfcc_cancion[i:i + ventana_tamaño]
+        val_disparidad = comparar_mfcc(mfccFR, segmento_mfcc)
+        if val_disparidad < mejor_disparidad:
+            mejor_disparidad = val_disparidad
+            mejor_segmento = segmento_mfcc
+
+    if mejor_segmento is not None and mejor_disparidad < umbral:
+        resultados.append((archivo_cancion, archivo_fragmento, mejor_disparidad))
+    else:
+        resultados.append(("NOT_FOUND", archivo_fragmento, mejor_disparidad))
 
     return resultados
 
 def main():
-    # Parámetros
-    umbral = 1000
+    start_time = time.time()
+    print("Iniciando comparación de fragmentos de audio...")
+
+    umbral = 20400
     carpeta_canciones = "songs"
     carpeta_fragmentos = "fragments2"
 
-    # Preparar el dataframe para los resultados
     datoscsv = {'Canción': [], 'Fragmento': [], 'Valor disparidad': []}
+    mfcc_canciones_cache = {}
 
-    # Procesar cada archivo en la carpeta de fragmentos y canciones en paralelo
     archivos_fragmentos = [f for f in os.listdir(carpeta_fragmentos) if f.endswith('.wav')]
     archivos_canciones = [f for f in os.listdir(carpeta_canciones) if f.endswith(('.mp3', '.wav'))]
 
+    # Precalcular y guardar los MFCC de todas las canciones
+    for archivo_cancion in archivos_canciones:
+        cancion_path = os.path.join(carpeta_canciones, archivo_cancion)
+        audio, Fs = leer_audio(cancion_path)
+        mfcc_cancion = calcular_mfcc(audio, Fs)
+        mfcc_canciones_cache[archivo_cancion] = (mfcc_cancion, Fs)
+
+    # Guardar los MFCC precalculados en un archivo para uso futuro
+    with open("mfcc_canciones_cache.pkl", "wb") as f:
+        pickle.dump(mfcc_canciones_cache, f)
+
+    # Paralelización del procesamiento de fragmentos
     with ProcessPoolExecutor() as executor:
         futuros = []
         for archivo_fragmento in archivos_fragmentos:
+            print(f"Procesando fragmento {archivo_fragmento}...")
             for archivo_cancion in archivos_canciones:
-                futuros.append(executor.submit(procesar_combinacion, archivo_fragmento, archivo_cancion, carpeta_fragmentos, carpeta_canciones, umbral))
+                futuros.append(executor.submit(procesar_combinacion, archivo_fragmento, archivo_cancion, carpeta_fragmentos, carpeta_canciones, umbral, mfcc_canciones_cache))
 
-        for futuro in concurrent.futures.as_completed(futuros):
+        for futuro in as_completed(futuros):
             resultado = futuro.result()
             if resultado:
                 for archivo_cancion, archivo_fragmento, val_disparidad in resultado:
@@ -75,10 +104,8 @@ def main():
                     datoscsv['Fragmento'].append(archivo_fragmento)
                     datoscsv['Valor disparidad'].append(val_disparidad)
 
-    # Crear el dataframe
     df = pd.DataFrame(datoscsv)
 
-    # Encontrar la canción más probable para cada fragmento
     fragmentos_unicos = df['Fragmento'].unique()
     resultados_probables = {'Fragmento': [], 'Canción Probable': [], 'Valor disparidad': []}
 
@@ -89,17 +116,13 @@ def main():
         resultados_probables['Canción Probable'].append(cancion_probable['Canción'])
         resultados_probables['Valor disparidad'].append(cancion_probable['Valor disparidad'])
 
-    # Crear el dataframe final y guardar los resultados en un archivo CSV
     end_time = time.time()
     print(f"Tiempo de ejecución: {end_time - start_time} segundos.")
 
     df_final = pd.DataFrame(resultados_probables)
     df_final.to_csv("result_dist.csv", index=False, encoding="utf-8")
 
-    
+    print("Comparaciones completadas y resultados guardados en 'result_dist.csv'.")
 
-    print("Comparaciones completadas y resultados guardados en 'result1.csv'.")
-    
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
