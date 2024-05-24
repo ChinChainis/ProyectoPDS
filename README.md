@@ -1,6 +1,11 @@
 # Shazam PDS
 ## Grado en Ingeniería Informática, Universidad de Granada
 ### Autores: 
+Miguel Alarcón Delgado
+Rubén Rodríguez Anguita
+Antonio Sánchez Alcaraz
+
+
 ### Tutor: José Andrés González López
 
 ## Instalación
