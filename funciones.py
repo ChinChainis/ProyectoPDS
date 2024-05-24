@@ -32,7 +32,7 @@ def representar(fun1,fun2):
     
     
     
-def comparar(fun1,fun2):
+def busqueda1(fun1,fun2):
     #fun1 canción a comparar, fun2 fragmento que comparamos
     sumerror = 0
     #sumerror sumatoria del algoritmo básico
@@ -68,6 +68,28 @@ def comparar(fun1,fun2):
     #np.append(listavalmin,valmin/100)
     #print("lista total: ",listavalmin)
     
+def busqueda12(fun1,fun2):
+    #buscar en fun1 donde coincida el primer valor
+    #Cuando coincida empezar comparación y anotar error en lista
+    #He puesto un valor  temporal de error de 1000000000 por si no encuentra un valor similar, 
+    #este debería ser como el umbral
+    #mismo proceso que antes, seleccionar la canción con menor error
+    listavalores =[]
+    sumerror=0
+    for i in range(0,fun1.shape[0]):
+        if(fun1.shape[0]-i > fun2.shape[0]):
+            recorref1 = fun1[i:fun2.shape[0]+i]
+            restaarrays = np.int64(np.subtract(fun2,recorref1))
+            potarrays = np.power(restaarrays,2)
+            sumerror = np.sum(potarrays)
+            listavalores.append(sumerror)
+            sumerror = 0
+    if(listavalores != []):
+        valmin = np.min(listavalores)
+    else:
+        valmin = umbral
+    #print("Valor minimo",valmin)
+    return valmin
     
 def busqueda2(fun1,fun2):
     #buscar en fun1 donde coincida el primer valor
@@ -89,7 +111,7 @@ def busqueda2(fun1,fun2):
                 listavalores.append(sumerror)
                 sumerror = 0
     if(listavalores != []):
-        valmin = listavalores[np.argmin(listavalores)]
+        valmin = np.min(listavalores)
     else:
         valmin = umbral
     #print("Valor minimo",valmin)
@@ -138,8 +160,8 @@ def decode_dtmf(seg, Fs):
 
     largest_peaks = peaks[largest_peaks_indices]
     
-    print(len(largest_peaks))
-    print('frecuencias canción cada 0.5s: ', largest_peaks)
+    #print(len(largest_peaks))
+    #print('frecuencias canción cada 0.5s: ', largest_peaks)
     return largest_peaks
 
 def comparar(frag, lista):
@@ -148,7 +170,6 @@ def comparar(frag, lista):
     pos = None
     
     for elemento in lista:
-        len(elemento[1])
         # Calcula la distancia euclidiana entre las huellas digitales
         #for i in range(0,len(elemento[1]),len(frag)):
         for i in range(0,len(elemento[1]) - len(frag)):
@@ -161,12 +182,12 @@ def comparar(frag, lista):
                 distancia_min = distancia
                 cancion = elemento[0]
 
-        print("DM: ",distancia_min)
+        #print("DM: ",distancia_min)
         cancion = elemento[0]
     
     #Umbral de corte
     umbral = 0.5
-    print("canc: ",cancion)
+    #print("canc: ",cancion)
     # Si la distancia mínima está por debajo del umbral, considera que es la misma canción
     if distancia_min < umbral:
         return cancion
@@ -181,18 +202,18 @@ def create_constellation(audio, Fs):
     window_length_samples = int(dur_segmento * Fs)
     window_length_samples += window_length_samples % 2
 
-    num_peaks = 10
+    num_picos = 10
 
     #Dividir la canción en segmentos de igual tamaño según el tiempo especificado
 
-    amount_to_pad = window_length_samples - audio.size % window_length_samples
+    divisiones = window_length_samples - audio.size % window_length_samples
 
     #rellena el array de la canción con 0
-    song_input = np.pad(audio, (0, amount_to_pad))
+    song_input = np.pad(audio, (0, divisiones))
 
     #Transformada de fourier en tiempo discreto según 
     # el array padeado de antes, la frecuencia y las ventanas de tiempo del principio de la función
-    frequencies, times, stft = signal.stft(song_input, Fs, nperseg=window_length_samples, nfft=window_length_samples, return_onesided=True)
+    frequencias, times, stft = signal.stft(song_input, Fs, nperseg=window_length_samples, nfft=window_length_samples, return_onesided=True)
 
     #Aquí contredremos la constelación que es el agrupamiento de las frecuencias extraidas de una canción, 
     #solo cogeremos un número reducido de picos para analizar
@@ -206,18 +227,18 @@ def create_constellation(audio, Fs):
 
         #picos son las frecuencias mayores encontradas en una distancia especificada
         picos, props = signal.find_peaks(spectrum, prominence=0, distance=200)
-        n_peaks = min(num_peaks, len(picos))
+        n_picos = min(num_picos, len(picos))
 
         #Obtener los n mayores picos de la secuencia cada 10 picos como mínimo
 
-        largest_peaks = np.argpartition(props["prominences"], -n_peaks)[-n_peaks:]
+        largest_peaks = np.argpartition(props["prominences"], -n_picos)[-n_picos:]
 
-        for peak in picos[largest_peaks]:
-            frequency = frequencies[peak]
+        for pico in picos[largest_peaks]:
+            freq = frequencias[pico]
             #generamos constelación
-            constellation_map.append([time_idx, frequency])
+            constellation_map.append([time_idx, freq])
 
-    #print(constellation_map)
+    #print('aa',constellation_map)
     return constellation_map
 
 def create_hashes(constellation_map, song_id=None):
@@ -246,41 +267,47 @@ def create_hashes(constellation_map, song_id=None):
 
 
 def comparar2(hashes,database):
-    matches_per_song = {}
+    matches_por_canc = {}
     #recorremos los hashes y vemos las coincidencias y creamos una nueva lista de coincidencias con canciones, 
     #para luego concretar cuál es el mejor matching
     for hash, (sample_time, _) in hashes.items():
         if hash in database:
             matching_occurences = database[hash]
             for source_time, song_index in matching_occurences:
-                if song_index not in matches_per_song:
-                    matches_per_song[song_index] = []
-                matches_per_song[song_index].append((hash, sample_time, source_time))
+                if song_index not in matches_por_canc:
+                    matches_por_canc[song_index] = []
+                matches_por_canc[song_index].append((hash, sample_time, source_time))
 
     #lista de puntuaciones
-    scores = {}
+    puntuaciones = {}
     #puntuación máxima --> nos servirá de umbral
-    punt_max = 0
+    #0 -> 5.2%
+    #250 -> 2.5%
+    #300 -> 2.1%
+    #350 -> 2.6%
+    #500 -> 4.7%
+    #1000 ->17.20%
+    punt_max = 300
     #nombre de la canción ganadora --> lo igualamos a NOT_FOUND por defecto
-    res_cancion = ""
+    res_cancion = "NOT_FOUND"
     #song_index es el nombre de la canción
-    for song_index, matches in matches_per_song.items():
-        song_scores_by_offset = {}
+    for song_index, matches in matches_por_canc.items():
+        puntuaciones_por_offset = {}
         for hash, sample_time, source_time in matches:
             #vemos la diferencia de tiempo para escoger las frecuencias que encajen
             delta = source_time - sample_time
-            if delta not in song_scores_by_offset:
-                song_scores_by_offset[delta] = 0
+            if delta not in puntuaciones_por_offset:
+                puntuaciones_por_offset[delta] = 0
             #empezamos a añadir el valor de puntuación
-            song_scores_by_offset[delta] += 1
+            puntuaciones_por_offset[delta] += 1
 
         max = (0, 0)
         #seleccionamos la puntuación máxima
-        for offset, score in song_scores_by_offset.items():
+        for offset, score in puntuaciones_por_offset.items():
             if score > max[1]:
                 max = (offset, score)
         
-        scores[song_index] = max
+        puntuaciones[song_index] = max
         if (punt_max < max[1]):
             punt_max = max[1]
             res_cancion = song_index
