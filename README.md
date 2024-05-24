@@ -26,6 +26,8 @@ Para iniciar el proceso de reconocimiento de la carpeta fragments (1500 archivos
 **Uso de otros algoritmos:**
 Para usar otros algoritmos ejecutar:
 `$python3 PruebasPDS.py songs fragments`
+`$python3 coseno_algorit_huella_opt.py`
+
 Y elegir el modo mediante los inputs del programa.
 
 
